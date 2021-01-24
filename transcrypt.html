@@ -1,0 +1,22 @@
+<html>
+<head>
+  <script type="module">import * as analysisperiod from './transcrypt/__target__/analysisperiod.js'; window.analysisperiod = analysisperiod;</script>
+  <script type="module">import * as lbdatetime from './transcrypt/__target__/datetime.js'; window.lbdatetime = lbdatetime;</script>
+</head>
+<body>
+
+  <h1>Transcrypt Demo</h1>
+
+  Note, Transcrypt only works with Python 3.7
+
+  <button onclick="check_date()">Check the Ladybug Date</button>
+
+  <script>
+    function check_date() {
+      d=window.lbdatetime.datetime(6, 21, 12, 0, false);
+      alert("Ladybug says the date is " + d.__str__() + "!");
+    }
+  </script>
+
+</body>
+</html>

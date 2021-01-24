@@ -390,7 +390,19 @@ class _DataTypeEnumeration(object):
 
     def _import_modules(self):
         root_dir = os.path.dirname(__file__)
-        modules = os.listdir(os.path.dirname(__file__))
+        #modules = os.listdir(os.path.dirname(__file__))
+        modules = ['__init__.py',        'generic.py',        'temperature.py',
+                   '__target',           'illuminance.py',    'temperaturedelta.py',
+                   'angle.py',           'luminance.py',      'temperaturetime.py',
+                   'area.py',            'mass.py',           'thermalcondition.py',
+                   'base.py',            'massflowrate.py',   'time.py',
+                   'distance.py',        'power.py',          'uvalue.py',
+                   'energy.py',          'pressure.py',       'volume.py',
+                   'energyflux.py',      'rvalue.py',         'volumeflowrate.py',
+                   'energyintensity.py', 'specificenergy.py', 'volumeflowrateintensity.py',
+                   'fraction.py',        'speed.py']
+
+
         modules = [os.path.join(root_dir, mod) for mod in modules]
         importable = ['.{}'.format(os.path.basename(f)[:-3]) for f in modules
                       if os.path.isfile(f) and f.endswith('.py')
