@@ -9,26 +9,57 @@
   </script>
   <script type="text/javascript" src="https://cdn.jsdelivr.net/pyodide/v0.16.1/full/pyodide.js"></script>
   <script type="text/javascript">
-    pythonCode = `
-      def do_work(*args):
-          from ladybug.dt import DateTime
-          from ladybug.color import Color, Colorset, ColorRange
-
-          colorset = Colorset.openstudio_palette()
-          print(colorset)
-
-          dt = DateTime(6, 21, 12, 0, False)
-          print("Ladybug says the date is " + str(dt) + "!")
-
+    pythonCode1 = `
       import micropip
-      micropip.install('ladybug-core').then(do_work)
+      micropip.install('ladybug-core')
     `
 
+    pythonCode2 = `
+      from ladybug.location import Location
+      from ladybug.sunpath import Sunpath
+
+      # Create location. You can also extract location data from an epw file.
+      sydney = Location('Sydney', 'AUS', latitude=-33.87, longitude=151.22, time_zone=10)
+
+      # Initiate sunpath
+      sp = Sunpath.from_location(sydney)
+    `
+
+    var t1, t2, t3, t4, t5;
+    t1 = new Date().getTime();
     languagePluginLoader.then(() => {
-      return pyodide.loadPackage(['micropip'])
+      t2 = new Date().getTime();
+      console.log(`Loading Pyodide  ${(t2-t1)/1000.0}s`);
+
+      return pyodide.loadPackage(['micropip']);
     }).then(() => {
-      pyodide.runPython(pythonCode);
-    })
+      t3 = new Date().getTime();
+      console.log(`Loading Micropip ${(t3-t2)/1000.0}s`);
+
+      return pyodide.runPython(pythonCode1);
+    }).then(() => {
+      t4 = new Date().getTime();
+      console.log(`Loading Ladybug  ${(t4-t3)/1000.0}s`);
+
+      return pyodide.runPython(pythonCode2);
+    }).then(() => {
+      t5 = new Date().getTime();
+      console.log(`Importing Ladybug  ${(t5-t4)/1000.0}s`);
+
+      var i;
+      var values = [];
+      for (i = 0; i < 24; i++) {
+        hour = i;
+        pyodide.runPython(`sun = sp.calculate_sun(month=11, day=15, hour=${hour})`);
+        let sun = pyodide.pyimport('sun');
+        values.push([hour, sun.altitude, sun.azimuth]);
+      }
+
+      t6 = new Date().getTime();
+      console.log(`Running Script  ${(t6-t5)/1000.0}s`);
+      console.log(values);
+    });
+
   </script>
 </body>
 </html>
