@@ -61,5 +61,27 @@
     });
 
   </script>
+
+  <input type="file" onchange="readFile(this)">
+
+  <script type="text/javascript">
+  var epw_str = null;
+
+  function readFile(input) {
+    let file = input.files[0];
+
+    let reader = new FileReader();
+    reader.readAsText(file);
+
+    reader.onload = function() {
+      epw_str = reader.result
+      pyodide.runPython('from js import epw_str')
+      pyodide.runPython(`print("Call EPWFile with " + epw_str.splitlines()[0])`)
+    };
+
+  }
+  </script>
+
+
 </body>
 </html>
