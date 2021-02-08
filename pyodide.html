@@ -3,71 +3,43 @@
   <meta charset="utf-8">
 </head>
 <body>
+
+  <label for="file_input">Select EPW file:</label><br>
+  <input type="file" id="file_input" name="file_input" onchange="readFile(this)" accept="epw" disabled><br><br>
+  <table id="sun_table"></table>
+
   <script type="text/javascript">
       // set the pyodide files URL (packages.json, pyodide.asm.data etc)
       window.languagePluginUrl = 'https://cdn.jsdelivr.net/pyodide/v0.16.1/full/';
   </script>
   <script type="text/javascript" src="https://cdn.jsdelivr.net/pyodide/v0.16.1/full/pyodide.js"></script>
+  <script type="text/javascript" src="https://cdnjs.com/libraries/Chart.js"></script>
   <script type="text/javascript">
-    pythonCode1 = `
-      import micropip
-      micropip.install('ladybug-core')
-    `
-
-    pythonCode2 = `
-      from ladybug.location import Location
-      from ladybug.sunpath import Sunpath
-
-      # Create location. You can also extract location data from an epw file.
-      sydney = Location('Sydney', 'AUS', latitude=-33.87, longitude=151.22, time_zone=10)
-
-      # Initiate sunpath
-      sp = Sunpath.from_location(sydney)
-    `
-
-    var t1, t2, t3, t4, t5;
-    t1 = new Date().getTime();
     languagePluginLoader.then(() => {
-      t2 = new Date().getTime();
-      console.log(`Loading Pyodide  ${(t2-t1)/1000.0}s`);
-
       return pyodide.loadPackage(['micropip']);
     }).then(() => {
-      t3 = new Date().getTime();
-      console.log(`Loading Micropip ${(t3-t2)/1000.0}s`);
-
-      return pyodide.runPython(pythonCode1);
+      return pyodide.runPython('import micropip');
     }).then(() => {
-      t4 = new Date().getTime();
-      console.log(`Loading Ladybug  ${(t4-t3)/1000.0}s`);
-
-      return pyodide.runPython(pythonCode2);
-    }).then(() => {
-      t5 = new Date().getTime();
-      console.log(`Importing Ladybug  ${(t5-t4)/1000.0}s`);
-
-      var i;
-      var values = [];
-      for (i = 0; i < 24; i++) {
-        hour = i;
-        pyodide.runPython(`sun = sp.calculate_sun(month=11, day=15, hour=${hour})`);
-        let sun = pyodide.pyimport('sun');
-        values.push([hour, sun.altitude, sun.azimuth]);
-      }
-
-      t6 = new Date().getTime();
-      console.log(`Running Script  ${(t6-t5)/1000.0}s`);
-      console.log(values);
+      pyodide.runPython("micropip.install('ladybug-core')");
+      document.getElementById("file_input").disabled = false;
     });
-
   </script>
-
-  <input type="file" onchange="readFile(this)">
 
   <script type="text/javascript">
   var epw_str = null;
 
   function readFile(input) {
+    pythonCode = `
+      from js import epw_str
+      from ladybug.epw import EPW
+      from ladybug.location import Location
+      from ladybug.sunpath import Sunpath
+      epw = EPW.from_file_string(epw_str)
+      location = epw.location
+      print(location)
+      sp = Sunpath.from_location(location)
+    `
+
     let file = input.files[0];
 
     let reader = new FileReader();
@@ -75,13 +47,43 @@
 
     reader.onload = function() {
       epw_str = reader.result
-      pyodide.runPython('from js import epw_str')
-      pyodide.runPython(`print("Call EPWFile with " + epw_str.splitlines()[0])`)
-    };
+      pyodide.runPython(pythonCode)
 
-  }
+      var i;
+      var values = [];
+      for (i = 0; i < 24; i++) {
+        var hour = i;
+        pyodide.runPython(`sun = sp.calculate_sun(month=6, day=21, hour=${hour})`);
+        let sun = pyodide.pyimport('sun');
+        values.push([hour, sun.altitude, sun.azimuth]);
+      }
+
+      var sunTable = document.getElementById('sun_table');
+      sunTable.innerHTML = "";
+      let thead = sunTable.createTHead();
+      let rhead = thead.insertRow();
+      headers = ['Hour', 'Altitude', 'Azimuth'];
+      for (let header of headers) {
+        let th = document.createElement("th");
+        let text = document.createTextNode(header);
+        th.appendChild(text);
+        rhead.appendChild(th);
+      }
+
+      indices = [0, 1, 2];
+      for (let value of values) {
+        let row = sunTable.insertRow();
+        for (i in indices) {
+          let cell = row.insertCell();
+          let text = document.createTextNode(value[i]);
+          cell.appendChild(text);
+        }
+      }
+    }
+
+  };
+
   </script>
-
 
 </body>
 </html>
